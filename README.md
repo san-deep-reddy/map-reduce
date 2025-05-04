@@ -1,6 +1,6 @@
 # Enhanced MapReduce Implementation
 
-This project is a custom implementation of Google's MapReduce architecture, combining Python for orchestration with C++ for performance-critical components. It effectively demonstrates object-oriented design, parallel processing and cross-language integration for improved efficiency.
+This project is a custom implementation of Google's MapReduce architecture, combining Python for orchestration with C++ for performance-critical components.
 
 ## Overview
 
@@ -9,7 +9,7 @@ MapReduce is a programming model designed for processing and generating large da
 - **Python core** for workflow orchestration, task distribution and fault tolerance
 - **C++ performance modules** for data parsing, key-value pair generation and sorting
 - **Multiprocessing** for parallel task execution and efficient resource utilization
-- **Fault-tolerance mechanisms** to handle process failures gracefully
+- **Fault-tolerance mechanism** to handle process failures gracefully
 
 ## Architecture
 

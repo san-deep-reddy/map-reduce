@@ -22,8 +22,6 @@ ext_modules = [
 setup(
     name="mapreduce_cpp",
     version="0.1",
-    author="Your Name",
-    author_email="your.email@example.com",
     description="C++ performance-critical components for MapReduce",
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},

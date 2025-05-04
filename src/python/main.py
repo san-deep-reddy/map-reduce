@@ -24,12 +24,13 @@ def read_configs(file_path):
             input_file = configs.get("input_file")
             num_mappers = int(configs.get("number_of_mapper"))
             num_reducers = int(configs.get("number_of_reducer"))
+            use_cpp = configs.get("use_cpp", True)  # Default to using C++ if available
     except Exception as e:
         sys.exit(f'Fatal error: Unable to read the requested file. {e}')
 
-    return input_file, num_mappers, num_reducers
+    return input_file, num_mappers, num_reducers, use_cpp
 
-def initialize_master(num_mappers, num_reducers, input_file, user_defined_map, user_defined_reduce, kill_idx):
+def initialize_master(num_mappers, num_reducers, input_file, user_defined_map, user_defined_reduce, kill_idx, use_cpp=True):
     """
     Initializes the Master process and starts the MapReduce job.
 
@@ -40,7 +41,9 @@ def initialize_master(num_mappers, num_reducers, input_file, user_defined_map, u
         user_defined_map (function): User-defined map function.
         user_defined_reduce (function): User-defined reduce function.
         kill_idx (int): Index of the mapper to simulate failure (for fault tolerance).
+        use_cpp (bool): Whether to use C++ components if available.
     """
+    os.environ['USE_CPP_COMPONENTS'] = '1' if use_cpp else '0'
     master_instance = Master(num_mappers, num_reducers, input_file, user_defined_map, user_defined_reduce, kill_idx)
     master_instance.start_process()
 
@@ -194,3 +197,90 @@ class Master:
                     except Exception:
                         pass  # In a real-world scenario, implement retry logic here
 
+
+# Example usage and helper functions
+def word_count_map(key, value, emit):
+    """
+    Example map function for word count.
+    
+    Args:
+        key: Line number or identifier
+        value: Line of text
+        emit: Function to emit intermediate key-value pairs
+    """
+    # Split the line into words and emit each word with count 1
+    for word in value.strip().split():
+        # Remove punctuation and convert to lowercase
+        word = word.strip().lower()
+        word = ''.join(c for c in word if c.isalnum())
+        if word:
+            emit(word, "1")
+
+def word_count_reduce(key, values, emit):
+    """
+    Example reduce function for word count.
+    
+    Args:
+        key: Word
+        values: List of counts
+        emit: Function to emit final key-value pairs
+    """
+    # Sum the counts for each word
+    total = sum(int(count) for count in values)
+    emit(key, str(total))
+
+def inverted_index_map(doc_id, content, emit):
+    """
+    Example map function for inverted index.
+    
+    Args:
+        doc_id: Document identifier
+        content: Document content
+        emit: Function to emit intermediate key-value pairs
+    """
+    # Split the content into words and emit each word with the document ID
+    for word in content.strip().split():
+        word = word.strip().lower()
+        word = ''.join(c for c in word if c.isalnum())
+        if word:
+            emit(word, str(doc_id))
+
+def inverted_index_reduce(word, doc_ids, emit):
+    """
+    Example reduce function for inverted index.
+    
+    Args:
+        word: Word
+        doc_ids: List of document IDs
+        emit: Function to emit final key-value pairs
+    """
+    # Remove duplicates and create a sorted list of document IDs
+    unique_ids = sorted(set(doc_ids))
+    emit(word, ','.join(unique_ids))
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <config_file> [kill_mapper_idx]")
+        sys.exit(1)
+        
+    config_file = sys.argv[1]
+    kill_idx = int(sys.argv[2]) if len(sys.argv) > 2 else -1
+    
+    input_file, num_mappers, num_reducers, use_cpp = read_configs(config_file)
+    
+    print(f"Starting MapReduce job:")
+    print(f"  Input file:    {input_file}")
+    print(f"  # of mappers:  {num_mappers}")
+    print(f"  # of reducers: {num_reducers}")
+    print(f"  Using C++:     {use_cpp}")
+    
+    # Default to word count example
+    initialize_master(
+        num_mappers=num_mappers,
+        num_reducers=num_reducers,
+        input_file=input_file,
+        user_defined_map=word_count_map,
+        user_defined_reduce=word_count_reduce,
+        kill_idx=kill_idx,
+        use_cpp=use_cpp
+    )
